@@ -1,4 +1,4 @@
-# This is entirely vibecoded. Credit to: https://github.com/Tejasarus/SwitchKMAdapter and https://github.com/mizuyoukanao/nxic-pico
+# This is entirely vibecoded And not even working . Look at these instead: https://github.com/Tejasarus/SwitchKMAdapter and https://github.com/mizuyoukanao/nxic-pico
 
 [![Build SwitchKM-Pico Firmware](https://github.com/your-username/switch-km-pico/actions/workflows/build.yml/badge.svg)](https://github.com/your-username/switch-km-pico/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
