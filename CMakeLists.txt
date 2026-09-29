@@ -50,9 +50,6 @@ target_link_libraries(switch_km_pico
     pico_multicore
     pico_unique_id
     hardware_pio
-    hardware_flash
-    hardware_watchdog
-    pico_lwip_nosys
     tinyusb_device
     tinyusb_host
     tinyusb_pico_pio_usb
