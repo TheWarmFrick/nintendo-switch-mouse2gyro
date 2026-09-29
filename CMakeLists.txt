@@ -1,7 +1,30 @@
 cmake_minimum_required(VERSION 3.13)
-
-# Include Pico SDK importer
+set(PICO_BOARD pico CACHE STRING "Board type")
 include(pico_sdk_import.cmake)
+
+# Configure Pico-PIO-USB BEFORE pico_sdk_init()
+# This allows Pico SDK to automatically configure TinyUSB with PIO-USB host support
+if (NOT DEFINED PICO_PIO_USB_PATH)
+    if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/lib/Pico-PIO-USB/src/pio_usb.c)
+        set(PICO_PIO_USB_PATH ${CMAKE_CURRENT_LIST_DIR}/lib/Pico-PIO-USB)
+    elseif (EXISTS ${CMAKE_CURRENT_LIST_DIR}/lib/pico-pio-usb/src/pio_usb.c)
+        set(PICO_PIO_USB_PATH ${CMAKE_CURRENT_LIST_DIR}/lib/pico-pio-usb)
+    else()
+        include(FetchContent)
+        FetchContent_Declare(
+            pico_pio_usb_fetch
+            GIT_REPOSITORY https://github.com/sekigon-gonnoc/Pico-PIO-USB
+            GIT_TAG main
+        )
+        FetchContent_GetProperties(pico_pio_usb_fetch)
+        if (NOT pico_pio_usb_fetch_POPULATED)
+            FetchContent_Populate(pico_pio_usb_fetch)
+        endif()
+        set(PICO_PIO_USB_PATH ${pico_pio_usb_fetch_SOURCE_DIR})
+    endif()
+endif()
+
+message("Pico-PIO-USB path: ${PICO_PIO_USB_PATH}")
 
 project(switch_km_pico C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -10,74 +33,34 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the Pico SDK
 pico_sdk_init()
 
-# Locate or fetch pico-pio-usb library
-if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/lib/pico-pio-usb/CMakeLists.txt")
-    add_subdirectory(lib/pico-pio-usb)
-elseif (EXISTS "${CMAKE_CURRENT_LIST_DIR}/pico-pio-usb/CMakeLists.txt")
-    add_subdirectory(pico-pio-usb)
-else()
-    include(FetchContent)
-    FetchContent_Declare(
-        pico_pio_usb
-        GIT_REPOSITORY https://github.com/sekigon-gonnoc/pico-pio-usb.git
-        GIT_TAG master
-    )
-    FetchContent_MakeAvailable(pico_pio_usb)
-endif()
-
-# Firmware executable target
-# Include TinyUSB Host sources directly without linking tinyusb_host
-# (tinyusb_host forces RP2040_USB_HOST_MODE=1 which disables native USB device mode)
 add_executable(switch_km_pico
     main.c
     switch_descriptors.c
     switch_reports.c
     nxic_gyro.c
-    ${PICO_SDK_PATH}/lib/tinyusb/src/host/usbh.c
-    ${PICO_SDK_PATH}/lib/tinyusb/src/host/hub.c
-    ${PICO_SDK_PATH}/lib/tinyusb/src/class/hid/hid_host.c
-    ${PICO_SDK_PATH}/lib/tinyusb/src/portable/raspberrypi/pio_usb/hcd_pio_usb.c
 )
 
-# Enforce Native Device Mode (Switch Pro Controller) and PIO Host Mode (KBM Hub)
-target_compile_definitions(switch_km_pico PRIVATE
-    CFG_TUH_RPI_PIO_USB=1
-    RP2040_USB_HOST_MODE=0
-    RP2040_USB_DEVICE_MODE=1
-)
-
-# Header include paths
 target_include_directories(switch_km_pico PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
-    ${CMAKE_CURRENT_LIST_DIR}/lib/pico-pio-usb/src
-    ${pico_pio_usb_SOURCE_DIR}/src
-    ${PICO_SDK_PATH}/lib/tinyusb/src
+    ${PICO_PIO_USB_PATH}/src
 )
 
-# Hardware and TinyUSB Device stack
-target_link_libraries(switch_km_pico PRIVATE
+target_link_libraries(switch_km_pico
     pico_stdlib
     pico_multicore
+    pico_unique_id
     hardware_pio
-    hardware_dma
-    hardware_irq
-    hardware_clocks
+    hardware_flash
+    hardware_watchdog
+    pico_lwip_nosys
     tinyusb_device
-    tinyusb_board
+    tinyusb_host
+    tinyusb_pico_pio_usb
 )
 
-# Link pico_pio_usb target for software host on GP2/GP3
-if (TARGET pico_pio_usb)
-    target_link_libraries(switch_km_pico PRIVATE pico_pio_usb)
-elseif (TARGET PioUsb)
-    target_link_libraries(switch_km_pico PRIVATE PioUsb)
-elseif (TARGET pico-pio-usb)
-    target_link_libraries(switch_km_pico PRIVATE pico-pio-usb)
-endif()
-
-# Disable default UART to save power and prevent pin conflicts
+# Disable default stdio UART/USB to prevent pin conflicts
 pico_enable_stdio_uart(switch_km_pico 0)
 pico_enable_stdio_usb(switch_km_pico 0)
 
-# Generate switch_km_pico.uf2, .hex, .bin, and .map
+# Generate UF2 artifact
 pico_add_extra_outputs(switch_km_pico)

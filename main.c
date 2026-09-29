@@ -48,6 +48,8 @@ void core1_main(void) {
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len) {
     (void) desc_report;
     (void) desc_len;
+    // Set to BOOT protocol for standard keyboard and mouse reports
+    tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_BOOT);
     tuh_hid_receive_report(dev_addr, instance);
 }
 
@@ -134,9 +136,20 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
         if (len >= sizeof(hid_keyboard_report_t)) {
             process_keyboard_report((hid_keyboard_report_t const*) report);
         }
-    } else if (itf_protocol == HID_ITF_PROTOCOL_MOUSE) {
-        if (len >= sizeof(hid_mouse_report_t)) {
-            process_mouse_report((hid_mouse_report_t const*) report);
+    } else {
+        // Process mouse reports (handles standard boot protocol and report-ID prefixed mice)
+        if (len >= 3) {
+            uint8_t const* mdata = report;
+            uint16_t mlen = len;
+
+            // Strip report ID if present (common with multi-interface gaming mice)
+            if (mlen >= 4 && (mdata[0] == 0x01 || mdata[0] == 0x02)) {
+                mdata++;
+                mlen--;
+            }
+
+            hid_mouse_report_t const *m = (hid_mouse_report_t const *) mdata;
+            process_mouse_report(m);
         }
     }
 

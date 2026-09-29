@@ -75,9 +75,9 @@ void nxic_gyro_get_imu_samples(int16_t samples[3][6]) {
         float pitch_sub = s_gyro_state.current_pitch_rate * decay_factor;
         float yaw_sub   = s_gyro_state.current_yaw_rate * decay_factor;
 
-        samples[i][3] = clamp_int16(pitch_sub); // Gyro X: Pitch
-        samples[i][4] = clamp_int16(yaw_sub);   // Gyro Y: Yaw
-        samples[i][5] = 0;                      // Gyro Z: Roll
+        samples[i][3] = clamp_int16(pitch_sub); // Gyro X: Pitch (Vertical Aim)
+        samples[i][4] = clamp_int16(yaw_sub);   // Gyro Y: Roll (Dual Aim)
+        samples[i][5] = clamp_int16(yaw_sub);   // Gyro Z: Yaw (Horizontal Aim)
 
         decay_factor *= decay;
     }
