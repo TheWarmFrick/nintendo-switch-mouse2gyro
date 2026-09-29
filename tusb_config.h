@@ -22,6 +22,7 @@ extern "C" {
 
 // PIO USB Host (RHPort 1) is configured as USB HOST (Keyboard & Mouse Link)
 #define CFG_TUH_ENABLED             1
+#define CFG_TUH_RPI_PIO_USB         1
 #define BOARD_HOST_RHPORT_NUM       1
 
 #ifndef CFG_TUSB_MEM_SECTION

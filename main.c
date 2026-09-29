@@ -190,10 +190,16 @@ int main(void) {
 
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
 
-        if (current_time - last_led_blink >= 500) {
-            last_led_blink = current_time;
-            led_state = !led_state;
-            gpio_put(PIN_STATUS_LED, led_state);
+        if (tud_mounted()) {
+            // Solid ON when successfully enumerated and connected to PC or Switch
+            gpio_put(PIN_STATUS_LED, 1);
+        } else {
+            // Blinks while waiting for USB host enumeration
+            if (current_time - last_led_blink >= 250) {
+                last_led_blink = current_time;
+                led_state = !led_state;
+                gpio_put(PIN_STATUS_LED, led_state);
+            }
         }
 
         // Nintendo Switch 15ms frame dispatch (~66Hz / 120Hz)

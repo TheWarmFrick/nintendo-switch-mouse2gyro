@@ -26,11 +26,24 @@ else()
 endif()
 
 # Firmware executable target
+# Include TinyUSB Host sources directly without linking tinyusb_host
+# (tinyusb_host forces RP2040_USB_HOST_MODE=1 which disables native USB device mode)
 add_executable(switch_km_pico
     main.c
     switch_descriptors.c
     switch_reports.c
     nxic_gyro.c
+    ${PICO_SDK_PATH}/lib/tinyusb/src/host/usbh.c
+    ${PICO_SDK_PATH}/lib/tinyusb/src/host/hub.c
+    ${PICO_SDK_PATH}/lib/tinyusb/src/class/hid/hid_host.c
+    ${PICO_SDK_PATH}/lib/tinyusb/src/portable/raspberrypi/pio_usb/hcd_pio_usb.c
+)
+
+# Enforce Native Device Mode (Switch Pro Controller) and PIO Host Mode (KBM Hub)
+target_compile_definitions(switch_km_pico PRIVATE
+    CFG_TUH_RPI_PIO_USB=1
+    RP2040_USB_HOST_MODE=0
+    RP2040_USB_DEVICE_MODE=1
 )
 
 # Header include paths
@@ -41,7 +54,7 @@ target_include_directories(switch_km_pico PRIVATE
     ${PICO_SDK_PATH}/lib/tinyusb/src
 )
 
-# Hardware and TinyUSB libraries
+# Hardware and TinyUSB Device stack
 target_link_libraries(switch_km_pico PRIVATE
     pico_stdlib
     pico_multicore
@@ -50,11 +63,10 @@ target_link_libraries(switch_km_pico PRIVATE
     hardware_irq
     hardware_clocks
     tinyusb_device
-    tinyusb_host
     tinyusb_board
 )
 
-# Link pico_pio_usb target (defined by pico-pio-usb repository)
+# Link pico_pio_usb target for software host on GP2/GP3
 if (TARGET pico_pio_usb)
     target_link_libraries(switch_km_pico PRIVATE pico_pio_usb)
 elseif (TARGET PioUsb)
