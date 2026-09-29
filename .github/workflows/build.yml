@@ -1,0 +1,84 @@
+name: Build SwitchKM-Pico Firmware
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+  release:
+    types: [ created ]
+
+jobs:
+  build:
+    name: Compile UF2 Firmware
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Toolchain and Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake \
+            ninja-build \
+            gcc-arm-none-eabi \
+            libnewlib-arm-none-eabi \
+            libstdc++-arm-none-eabi-newlib \
+            build-essential \
+            python3
+
+      - name: Checkout Pico SDK
+        run: |
+          git clone --depth 1 --branch 1.5.1 https://github.com/raspberrypi/pico-sdk.git ${{ runner.temp }}/pico-sdk
+          cd ${{ runner.temp }}/pico-sdk
+          git submodule update --init --depth 1
+
+      - name: Ensure pico-pio-usb Submodule is Present
+        run: |
+          if [ ! -d "lib/pico-pio-usb/src" ]; then
+            mkdir -p lib
+            git clone --depth 1 https://github.com/sekigon-gonnoc/pico-pio-usb.git lib/pico-pio-usb
+          fi
+
+      - name: Configure CMake
+        env:
+          PICO_SDK_PATH: ${{ runner.temp }}/pico-sdk
+        run: |
+          cmake -B build -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPICO_SDK_PATH=${{ runner.temp }}/pico-sdk
+
+      - name: Compile Firmware with Ninja
+        run: |
+          ninja -C build
+
+      - name: Verify Build Artifacts
+        run: |
+          ls -la build/
+          if [ ! -f "build/switch_km_pico.uf2" ]; then
+            echo "Error: switch_km_pico.uf2 was not generated!"
+            exit 1
+          fi
+          echo "Build successful! UF2 size: $(stat -c%s build/switch_km_pico.uf2) bytes."
+
+      - name: Upload UF2 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: switch_km_pico.uf2
+          path: build/switch_km_pico.uf2
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Attach UF2 to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/switch_km_pico.uf2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

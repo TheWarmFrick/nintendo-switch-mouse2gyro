@@ -1,0 +1,28 @@
+# CMake and Compiler Build Outputs
+build/
+bin/
+*.uf2
+*.elf
+*.bin
+*.hex
+*.map
+*.dis
+*.d
+*.o
+*.obj
+
+# Node.js and Web Preview Artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*.local
+
+# IDE and OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
