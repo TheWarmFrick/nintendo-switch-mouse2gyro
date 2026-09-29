@@ -22,25 +22,19 @@ static volatile uint32_t s_active_buttons = 0;
 static volatile uint16_t s_left_stick_x = STICK_CENTER;
 static volatile uint16_t s_left_stick_y = STICK_CENTER;
 
+#ifndef TUH_CFGID_RPI_PIO_USB_CONFIGURATION
+#define TUH_CFGID_RPI_PIO_USB_CONFIGURATION 1
+#endif
+
 // PIO USB Host Configuration on GP2/GP3
-static pio_usb_configuration_t pio_host_cfg = {
-    .pin_dp = PIN_PIO_USB_HOST_DP,
-    .pinout = PIO_USB_PINOUT_DIRECT,
-    .alarm_pool = NULL,
-    .tx_ch = 0,
-    .sm_tx = 0,
-    .sm_rx = 1,
-    .sm_eop = 2,
-    .pio_rx_num = 0,
-    .pio_tx_num = 0,
-    .tx_ch_num = 0
-};
+static pio_usb_configuration_t pio_host_cfg = PIO_USB_DEFAULT_CONFIG;
 
 // --------------------------------------------------------------------+
 // CORE 1: PIO USB Host Task (Reads Keyboard & Mouse via Hub)
 // --------------------------------------------------------------------+
 void core1_main(void) {
-    tuh_configure(BOARD_HOST_RHPORT_NUM, TUH_CFGID_RPI_PICO_PIO_USB, &pio_host_cfg);
+    pio_host_cfg.pin_dp = PIN_PIO_USB_HOST_DP;
+    tuh_configure(BOARD_HOST_RHPORT_NUM, TUH_CFGID_RPI_PIO_USB_CONFIGURATION, &pio_host_cfg);
     tuh_init(BOARD_HOST_RHPORT_NUM);
 
     while (1) {

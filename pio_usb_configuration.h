@@ -13,7 +13,4 @@
 // Use PIO0 for USB Host
 #define PIO_USB_PIO_INSTANCE           0
 
-// Pin drive strength & pull settings
-#define PIO_USB_PINOUT_DIRECT          1
-
 #endif // PIO_USB_CONFIGURATION_H_
