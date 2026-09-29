@@ -28,7 +28,7 @@ uint8_t const * tud_descriptor_device_cb(void) {
 // --------------------------------------------------------------------+
 // HID Report Descriptor for Nintendo Switch Pro Controller
 // --------------------------------------------------------------------+
-const uint8_t switch_report_descriptor[SWITCH_REPORT_DESC_LEN] = {
+const uint8_t switch_report_descriptor[] = {
     0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
     0x09, 0x05,        // Usage (Game Pad)
     0xA1, 0x01,        // Collection (Application)

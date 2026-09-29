@@ -8,8 +8,13 @@ extern "C" {
 // ============================================================================
 // COMMON CONFIGURATION
 // ============================================================================
+#ifndef CFG_TUSB_MCU
 #define CFG_TUSB_MCU                OPT_MCU_RP2040
+#endif
+
+#ifndef CFG_TUSB_OS
 #define CFG_TUSB_OS                 OPT_OS_NONE
+#endif
 
 // Native USB port (RHPort 0) is configured as USB DEVICE (Switch Link)
 #define CFG_TUD_ENABLED             1

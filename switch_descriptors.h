@@ -18,10 +18,10 @@ extern "C" {
 #define SWITCH_EP_OUT               0x01
 #define SWITCH_EP_SIZE              64
 
-// HID Report Descriptor Length
-#define SWITCH_REPORT_DESC_LEN      86
+// HID Report Descriptor Length (88 bytes)
+#define SWITCH_REPORT_DESC_LEN      88
 
-extern const uint8_t switch_report_descriptor[SWITCH_REPORT_DESC_LEN];
+extern const uint8_t switch_report_descriptor[];
 
 #ifdef __cplusplus
 }
